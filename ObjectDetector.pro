@@ -56,6 +56,11 @@ unix:!macx:!ios:!android {
     INCLUDEPATH += /usr/local/include/opencv4
     INCLUDEPATH += /usr/include/opencv4
     LIBS += -lopencv_core -lopencv_dnn -lopencv_highgui -lopencv_imgcodecs -lopencv_imgproc -lopencv_objdetect -lopencv_video -lopencv_videoio
+
+    INCLUDEPATH += /usr/include/gstreamer-1.0
+    INCLUDEPATH += /usr/include/glib-2.0
+    INCLUDEPATH += /usr/lib/x86_64-linux-gnu/glib-2.0/include
+    LIBS += -lgstreamer-1.0 -lgobject-2.0 -lglib-2.0 -lgstbase-1.0 -lgstvideo-1.0 -lgstapp-1.0 -lgstnet-1.0 -lgstrtspserver-1.0
 }
 
 macx {
@@ -85,6 +90,8 @@ macx {
     # Entitlements ekle
     QMAKE_ASSET_CATALOGS += $$PWD/Assets.xcassets
     QMAKE_ENTITLEMENTS += $$PWD/Entitlements.plist
+
+    #todo gstreamer libs
 }
 
 ios {
@@ -92,6 +99,7 @@ ios {
     QMAKE_INFO_PLIST = ./ios/Info.plist
     QMAKE_ASSET_CATALOGS = $$PWD/ios/Assets.xcassets
     QMAKE_ASSET_CATALOGS_APP_ICON = "AppIcon"
+    #todo gstreamer libs
 }
 
 android {
@@ -117,6 +125,8 @@ android {
             -lopencv_core
         ANDROID_EXTRA_LIBS = $$PWD/OpenCV-android-sdk/sdk/native/libs/arm64-v8a/libopencv_java4.so
     }
+
+    #todo gstreamer libs
 }
 
 # Default rules for deployment.
