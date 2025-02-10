@@ -11,12 +11,14 @@ SOURCES += \
     detectionworker.cpp \
     gstreamerrtsp.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    videoreader.cpp
 
 HEADERS += \
     detectionworker.h \
     gstreamerrtsp.h \
-    mainwindow.h
+    mainwindow.h \
+    videoreader.h
 
 FORMS += \
     mainwindow.ui

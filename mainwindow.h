@@ -8,6 +8,7 @@
 #include <QThread>
 #include "gstreamerrtsp.h"
 #include "detectionworker.h"
+#include "videoreader.h"
 
 #define STRINGIFY(x) #x
 #define EXPAND(x) STRINGIFY(x)
@@ -27,25 +28,27 @@ public:
     ~MainWindow();
 
 private slots:
+    void openFile();
     void setVideoFrame(const QImage &frame);
     void updateImageLabel(const QImage &processedImage);
     void handleError(const QString &errorMessage);
-    void on_playButton_clicked();
     void handleDetectionResult(const QImage &result);
+    void handleVideoFinished();
+    void on_playButton_clicked();    
+    void on_openButton_clicked();
 
 private:
-    bool shouldDetectFace();
-    void openImage();
+    bool shouldDetectObject();
     void initializeWorker();
     void cleanupWorker();
 
 private:
     Ui::MainWindow *ui;
-    QImage currentImage;
-    std::string imagePath;
     QSharedPointer<GStreamerRtsp> rtspStream;
-    DetectionWorker *worker;
-    QThread *workerThread;
+    DetectionWorker *workerDetection;
+    QThread *workerDetectionThread;
+    VideoReader *videoReader;
+    QThread *videoThread;
 };
 
 #endif // MAINWINDOW_H

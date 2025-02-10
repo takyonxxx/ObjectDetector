@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QImage>
 #include <QElapsedTimer>
+#include <QThread>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/dnn.hpp>
@@ -23,6 +24,7 @@ signals:
 
 private:
     cv::dnn::Net net;  // YOLOv4 Model
+    cv::VideoCapture cap;
     QString extractResource(const QString &resourcePath);
     std::vector<std::string> getOutputsNames(const cv::dnn::Net &net);
     cv::Mat QImageToCvMat(const QImage& qImage);

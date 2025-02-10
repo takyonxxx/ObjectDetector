@@ -5,8 +5,10 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , worker(nullptr)
-    , workerThread(nullptr)
+    , workerDetection(nullptr)
+    , workerDetectionThread(nullptr)
+    , videoReader(nullptr)
+    , videoThread(nullptr)
 {
     ui->setupUi(this);
 
@@ -35,50 +37,64 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    cleanupWorker();
+    cleanupWorker();   
     delete ui;
 }
 
 void MainWindow::initializeWorker()
 {
     // Create worker and thread
-    worker = new DetectionWorker();
-    workerThread = new QThread(this);
-    worker->moveToThread(workerThread);
+    workerDetection = new DetectionWorker();
+    workerDetectionThread = new QThread(this);
+    workerDetection->moveToThread(workerDetectionThread);
 
     // Connect signals/slots
-    connect(worker, &DetectionWorker::detectionDone,
+    connect(workerDetection, &DetectionWorker::detectionDone,
             this, &MainWindow::handleDetectionResult);
-    connect(workerThread, &QThread::finished,
-            worker, &QObject::deleteLater);
+    connect(workerDetectionThread, &QThread::finished,
+            workerDetection, &QObject::deleteLater);
 
     // Start the thread
-    workerThread->start();
+    workerDetectionThread->start();
+
+    videoThread = new QThread(this);
+    videoReader = new VideoReader();
+    videoReader->moveToThread(videoThread);
+
+    connect(videoReader, &VideoReader::frameReady, this, &MainWindow::setVideoFrame);
+    connect(videoReader, &VideoReader::finished, this, &MainWindow::handleVideoFinished);
+    connect(videoThread, &QThread::finished, videoReader, &QObject::deleteLater);
+
+    videoThread->start();
 }
 
 void MainWindow::cleanupWorker()
 {
-    if (workerThread) {
-        workerThread->quit();
-        workerThread->wait();
-        delete worker;
-        worker = nullptr;
-        workerThread = nullptr;
+    if (workerDetectionThread) {
+        workerDetectionThread->quit();
+        workerDetectionThread->wait();
+        delete workerDetection;
+        workerDetection = nullptr;
+        workerDetectionThread = nullptr;
+    }
+
+    if (videoThread) {
+        videoThread->quit();
+        videoThread->wait();
     }
 }
 
-void MainWindow::openImage()
+void MainWindow::openFile()
 {
     QString appDir = QString(EXPAND(PROJECT_PATH));
     QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Open Image"),
+                                                    tr("Open File"),
                                                     appDir,
-                                                    tr("Image Files (*.png *.jpg *.bmp);;All Files (*)"));
+                                                    "Video Files (*.mp4 *.avi *.mkv);;All Files (*)");
 
-    if (!fileName.isEmpty()) {
-        imagePath = fileName.toStdString();
-        currentImage.load(fileName);
-        ui->imageLabel->setPixmap(QPixmap::fromImage(currentImage));
+    if (!fileName.isEmpty() && videoReader) {
+        ui->lineUrl->setText(fileName);
+        QMetaObject::invokeMethod(videoReader, "startReading", Qt::QueuedConnection, Q_ARG(QString, fileName));
     }
 }
 
@@ -90,9 +106,9 @@ void MainWindow::setVideoFrame(const QImage &frame)
         return;
     }
 
-    if (shouldDetectFace()) {
+    if (shouldDetectObject()) {
         // Use QMetaObject::invokeMethod to safely call across threads
-        QMetaObject::invokeMethod(worker, "detectObject",
+        QMetaObject::invokeMethod(workerDetection, "detectObject",
                                   Qt::QueuedConnection,
                                   Q_ARG(QImage, resizedFrame));
     } /*else {
@@ -110,6 +126,12 @@ void MainWindow::handleDetectionResult(const QImage &result)
     ui->imageLabel->setScaledContents(true);
 }
 
+void MainWindow::handleVideoFinished() {
+    qDebug() << "Video playback finished.";
+    ui->openButton->setText("Open File");
+    ui->lineUrl->setText("rtsp://192.168.1.249:554/stream1");
+}
+
 void MainWindow::updateImageLabel(const QImage &processedImage)
 {
     QPixmap pixmap = QPixmap::fromImage(processedImage);
@@ -123,7 +145,7 @@ void MainWindow::handleError(const QString &errorMessage)
     QMessageBox::critical(this, tr("Error"), errorMessage);
 }
 
-bool MainWindow::shouldDetectFace()
+bool MainWindow::shouldDetectObject()
 {
     static int frameCounter = 0;
     frameCounter++;
@@ -151,5 +173,16 @@ void MainWindow::on_playButton_clicked()
             }
         }
         ui->playButton->setText("Play");
+    }
+}
+
+void MainWindow::on_openButton_clicked() {
+    if (ui->openButton->text() == "Open File") {
+        openFile();
+        ui->openButton->setText("Stop");
+    } else {
+        videoReader->stopReading();
+        ui->lineUrl->setText("rtsp://192.168.1.249:554/stream1");
+        ui->openButton->setText("Open File");
     }
 }
