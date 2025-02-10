@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>models/yolov4-tiny.cfg</file>
+        <file>models/yolov4-tiny.weights</file>
+        <file>models/coco.names</file>
+        <file>models/haarcascade_frontalface_default.xml</file>
+    </qresource>
+</RCC>
