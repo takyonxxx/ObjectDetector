@@ -160,17 +160,20 @@ void DetectionWorker::detectObject(const QImage &qImage) {
     }
 
     double processingTime = frameTimer.elapsed() / 1000.0;
+    int frameWidth = frame.cols;
+    int frameHeight = frame.rows;
 
     // Draw FPS and processing time
     std::string fpsText = "FPS: " + std::to_string(static_cast<int>(fps));
     std::ostringstream timeStream;
     timeStream << std::fixed << std::setprecision(3) << processingTime;
     std::string timeText = "Time: " + timeStream.str() + "s";
+    std::string dimensionsText = "Size: " + std::to_string(frameWidth) + "x" + std::to_string(frameHeight);
 
     // Draw background for FPS text
     cv::rectangle(frame,
                   cv::Point(10, 10),
-                  cv::Point(150, 60),
+                  cv::Point(160, 80),
                   cv::Scalar(0, 0, 0),
                   cv::FILLED);
 
@@ -182,6 +185,11 @@ void DetectionWorker::detectObject(const QImage &qImage) {
 
     cv::putText(frame, timeText,
                 cv::Point(15, 50),
+                cv::FONT_HERSHEY_SIMPLEX,
+                0.55, cv::Scalar(0, 255, 255), 2);
+
+    cv::putText(frame, dimensionsText,
+                cv::Point(15, 70),
                 cv::FONT_HERSHEY_SIMPLEX,
                 0.55, cv::Scalar(0, 255, 255), 2);
 

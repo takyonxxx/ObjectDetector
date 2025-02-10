@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include <QScreen>
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -15,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->imageLabel->setMaximumWidth(1920);
     ui->imageLabel->setMaximumHeight(1080);
+    this->resize(1280, 720);
 
     // Initialize RTSP stream
     rtspStream = QSharedPointer<GStreamerRtsp>::create(this);
@@ -23,6 +25,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Initialize worker and thread
     initializeWorker();
+
+    QScreen* screen = QGuiApplication::primaryScreen();
+    QRect screenGeometry = screen->availableGeometry();
+    int x = (screenGeometry.width() - this->width()) / 2;
+    int y = (screenGeometry.height() - this->height()) / 2;
+    move(x, y);
 }
 
 MainWindow::~MainWindow()
@@ -76,7 +84,7 @@ void MainWindow::openImage()
 
 void MainWindow::setVideoFrame(const QImage &frame)
 {
-    QImage resizedFrame = frame.scaled(800, 600, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    QImage resizedFrame = frame.scaled(1280, 720, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     if (resizedFrame.isNull() || resizedFrame.width() == 0 || resizedFrame.height() == 0) {
         qDebug() << "Resized frame is invalid!";
         return;

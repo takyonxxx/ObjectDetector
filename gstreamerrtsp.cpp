@@ -413,14 +413,14 @@ void GStreamerRtsp::handleFrame(GstSample *sample) {
         // Emit frame for display
         emit sendVideoFrame(image);
         // Update FPS counter
-        m_frameCount++;
-        auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastFpsUpdateTime).count();
-        if (elapsed >= 1000) {
-            m_currentFps = static_cast<int>(m_frameCount * 1000.0 / elapsed);
-            m_frameCount = 0;
-            m_lastFpsUpdateTime = now;
-        }
+        // m_frameCount++;
+        // auto now = std::chrono::steady_clock::now();
+        // auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastFpsUpdateTime).count();
+        // if (elapsed >= 1000) {
+        //     m_currentFps = static_cast<int>(m_frameCount * 1000.0 / elapsed);
+        //     m_frameCount = 0;
+        //     m_lastFpsUpdateTime = now;
+        // }
 
     } catch (const std::exception& e) {
         qCritical() << "Unhandled exception in frame processing:" << e.what();
@@ -507,6 +507,7 @@ void GStreamerRtsp::cleanup() {
 }
 
 QImage GStreamerRtsp::convertFrameToImage(GstSample *sample) {
+
     GstCaps *caps = gst_sample_get_caps(sample);
     if (!caps) {
         qDebug() << "No caps in sample";
