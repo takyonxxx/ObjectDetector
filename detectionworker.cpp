@@ -23,7 +23,6 @@ DetectionWorker::DetectionWorker(QObject *parent) : QObject(parent), fps(0.0f), 
 }
 
 void DetectionWorker::detectObject(const QImage &qImage) {
-
     if (net.empty()) {
         qDebug() << "Error: YOLOv4-Tiny model is not loaded!";
         return;
@@ -62,6 +61,10 @@ void DetectionWorker::detectObject(const QImage &qImage) {
     std::vector<cv::Rect> boxes;
     const float CONFIDENCE_THRESHOLD = 0.5f;
     const float NMS_THRESHOLD = 0.4f;
+
+    // Constants for distance calculation
+    const float KNOWN_WIDTH = 0.60f;  // Average width of a person in meters
+    const float FOCAL_LENGTH = 615.0f;  // Focal length (needs calibration)
 
     // Load class names from resource file
     static std::vector<std::string> classNames;
@@ -136,26 +139,51 @@ void DetectionWorker::detectObject(const QImage &qImage) {
             // Draw box
             cv::rectangle(frame, box, color, 2);
 
-            // Create label
-            std::string label = classNames[classId] + ": " +
-                                std::to_string(static_cast<int>(conf * 100)) + "%";
+            // Calculate width and distance
+            float pixelWidth = static_cast<float>(box.width);
+            float distanceToObject = 0.0f;
 
-            // Draw label
+            // Calculate distance for person class
+            //if (classNames[classId] == "person") {
+                distanceToObject = (KNOWN_WIDTH * FOCAL_LENGTH) / pixelWidth;
+            //}
+
+            // Create label with measurements
+            std::ostringstream labelStream;
+            labelStream << classNames[classId] << ": "
+                        << static_cast<int>(conf * 100) << "% "
+                       /* << "Width: " << std::fixed << std::setprecision(2)
+                        << pixelWidth << "px"*/;
+
+            if (distanceToObject > 0.0f) {
+                labelStream << "dist: " << std::fixed << std::setprecision(2)
+                            << distanceToObject << "m";
+            }
+            std::string label = labelStream.str();
+
+            // Calculate label dimensions
             int baseLine;
             cv::Size labelSize = cv::getTextSize(label, cv::FONT_HERSHEY_SIMPLEX,
                                                  0.5, 1, &baseLine);
             int labelTop = std::max(box.y, labelSize.height);
+
+            // Draw label background
             cv::rectangle(frame,
-                          cv::Point(box.x, labelTop - labelSize.height),
-                          cv::Point(box.x + labelSize.width, labelTop + baseLine),
+                          cv::Point(box.x, labelTop - labelSize.height - 10),
+                          cv::Point(box.x + labelSize.width, labelTop + baseLine - 10),
                           color, cv::FILLED);
+
+            // Draw label
             cv::putText(frame, label,
-                        cv::Point(box.x, labelTop),
+                        cv::Point(box.x, labelTop - 10),
                         cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
 
+            // Log detection with measurements
             // qDebug() << "Detected" << QString::fromStdString(classNames[classId])
             //          << "with confidence:" << conf
-            //          << "at position:" << box.x << box.y;
+            //          << "at position:" << box.x << box.y
+            //          << "width:" << pixelWidth << "px"
+            //          << "distance:" << distanceToObject << "m";
         }
     }
 
