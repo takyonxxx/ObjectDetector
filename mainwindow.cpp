@@ -111,12 +111,7 @@ void MainWindow::setVideoFrame(const QImage &frame)
         QMetaObject::invokeMethod(workerDetection, "detectObject",
                                   Qt::QueuedConnection,
                                   Q_ARG(QImage, resizedFrame));
-    } /*else {
-        // Update UI directly if no detection needed
-        QPixmap pixmap = QPixmap::fromImage(resizedFrame);
-        ui->imageLabel->setPixmap(pixmap);
-        ui->imageLabel->setScaledContents(true);
-    }*/
+    }
 }
 
 void MainWindow::handleDetectionResult(const QImage &result)
@@ -148,8 +143,36 @@ void MainWindow::handleError(const QString &errorMessage)
 bool MainWindow::shouldDetectObject()
 {
     static int frameCounter = 0;
+    static int processedFrames = 0;
+    static bool recentDetection = false;
+
     frameCounter++;
-    return (frameCounter % 2 == 0); // half frame 24 / 2 = 12
+
+    // Eğer yakın zamanda tespit varsa daha az sıklıkta işle (anti-flicker)
+    int skipRate = recentDetection ? 4 : 2; // Tespit varsa 4'te 1, yoksa 2'de 1
+
+    if (frameCounter % skipRate == 0 && processedFrames < 12) {
+        processedFrames++;
+
+        // 12 frame işledikten sonra sayacı sıfırla
+        if (processedFrames == 12) {
+            frameCounter = 0;
+            processedFrames = 0;
+            // Recent detection flag'ini sıfırla
+            recentDetection = false;
+        }
+
+        return true;
+    }
+
+    // 24 frame tamamlandığında sayacları sıfırla
+    if (frameCounter >= 24) {
+        frameCounter = 0;
+        processedFrames = 0;
+        recentDetection = false;
+    }
+
+    return false;
 }
 
 void MainWindow::on_playButton_clicked()

@@ -145,19 +145,19 @@ void DetectionWorker::detectObject(const QImage &qImage) {
 
             // Calculate distance for person class
             //if (classNames[classId] == "person") {
-                distanceToObject = (KNOWN_WIDTH * FOCAL_LENGTH) / pixelWidth;
+            distanceToObject = (KNOWN_WIDTH * FOCAL_LENGTH) / pixelWidth;
             //}
 
             // Create label with measurements
             std::ostringstream labelStream;
             labelStream << classNames[classId] << ": "
                         << static_cast<int>(conf * 100) << "% "
-                       /* << "Width: " << std::fixed << std::setprecision(2)
+                /* << "Width: " << std::fixed << std::setprecision(2)
                         << pixelWidth << "px"*/;
 
             if (distanceToObject > 0.0f) {
                 labelStream << "dist: " << std::fixed << std::setprecision(2)
-                            << distanceToObject << "m";
+                << distanceToObject << "m";
             }
             std::string label = labelStream.str();
 
@@ -279,4 +279,3 @@ std::vector<std::string> DetectionWorker::getOutputsNames(const cv::dnn::Net &ne
     }
     return names;
 }
-
